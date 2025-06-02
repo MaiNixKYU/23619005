@@ -4,16 +4,19 @@ DOI: https://doi.org/10.1109/AINIT61980.2024.10581523
 
 ---
 
-### 1. Research Purpose
+### 1. Introduction
 
-본 연구는 다중 모달 뇌종양 MRI 영상을 보다 정밀하게 분할하기 위해, 객체 탐지 모델인 YOLOv5로부터 얻은 종양 위치 정보를 프롬프트로 활용하여 MedSAM(Segment Anything in Medical Images)을 미세조정(fine-tuning)하고자 한다. 기존의 SAM 및 미세조정 전 MedSAM과 비교하여 향상된 정확도(Dice Score)를 목표로 하며, 의료영상 특화 모델 개발의 가능성을 검토한다.
+본 연구는 뇌종양 MRI 영상을 보다 정밀하게 분할하기 위해 객체 탐지 모델인 YOLOv5로부터 얻은 종양 위치 정보를 프롬프트로 활용하여 MedSAM (Segment Anything in Medical Images) 을 미세조정하고자 한다. 기존의 SAM 및 미세조정 전 MedSAM 과 비교하여 향상된 정확도를 목표로 한다.
 
 ---
 
 ### 2. Methodology
 
+<img width="273" alt="image" src="https://github.com/user-attachments/assets/599131d6-52f9-4a93-b253-7dbbc69897fc" />
+
 - **Dataset**  
-  BraTS 2023의 다중 모달 MRI 데이터 802건을 사용 (T1c, T2w, T2f). T1n은 정보가 제한적이므로 제외.  
+  BraTS 2023의 모달리티 MRI 데이터 사용함.
+  T1c, T2w, T2f 을 사용했으며 T1n은 종양을 뚜렷하게 구분하기 어려워 분석에서 제외
   종양이 강조되는 모달리티 중심으로 분석을 수행함.
 
 - **Preprocessing**  
@@ -25,7 +28,7 @@ DOI: https://doi.org/10.1109/AINIT61980.2024.10581523
   - 모델: YOLOv5s, YOLOv5l  
   - 학습 조건: 100 epochs, learning rate = 0.01, optimizer = SGD  
   - 성능 결과: YOLOv5l이 precision, mAP 측면에서 더 우수함  
-  - YOLOv5l의 예측 결과를 기반으로 bounding box 중심 좌표를 MedSAM의 프롬프트로 활용
+  - YOLOv5l의 예측 결과를 기반으로 bounding box 중심 좌표를 MedSAM 의 프롬프트로 활용
 
 - **Segmentation with MedSAM**
   - 구조: SAM 기반 모델의 Image Encoder, Prompt Encoder는 freeze  
@@ -43,24 +46,28 @@ DOI: https://doi.org/10.1109/AINIT61980.2024.10581523
 | MedSAM (Base)       | 0.723      |
 | MedSAM (Fine-tuned) | **0.889**  |
 
-- YOLOv5l 기반 프롬프트를 활용해 MedSAM의 세분화된 마스크 생성 능력을 크게 향상시킴
-- Fine-tuned MedSAM은 기존 SAM 및 미조정 MedSAM보다 유의미하게 높은 정확도를 기록
-- MedSAM은 종양의 형태적 특성을 보다 정밀하게 반영할 수 있었음
+- YOLOv5l 기반 프롬프트를 활용해 MedSAM 의 세분화된 마스크 생성 능력을 크게 향상시킴
+- Fine-tuned MedSAM은 기존 SAM 및 미조정 MedSAM 보다 유의미하게 높은 정확도를 기록
+- MedSAM 은 종양의 형태적 특성을 보다 정밀하게 반영할 수 있었음
 
 ---
 
 ### 4. Limitations
 
-- 실험은 BraTS 2023에 국한되었으며, 타 의료 영상 데이터셋에서의 일반화 성능은 미검증 상태
+- 실험은 BraTS 2023에 국한되었으며 타 의료 영상 데이터셋에서의 일반화 성능은 미검증 상태
 - 다양한 병변 유형 및 영상 모달리티에 대한 테스트가 추가적으로 필요
-- 전이성 종양, 비정형 구조, 저명도 병변 등 복잡한 패턴에 대한 대응 능력은 후속 연구에서 확인해야 함
+- 형태가 불규칙하거나 경계가 불분명한 병변에 대한 분할 성능은 향후 추가적인 검증이 요구
 
 ---
 
 ### 5. Summary
 
-본 논문은 일반 비전 모델(SAM)을 의료 영상에 맞게 변형한 MedSAM을 객체 탐지 기반 프롬프트와 결합하여 뇌종양 MRI 영상 분할 성능을 향상시킨 사례이다.  
-YOLOv5의 탐지 결과를 정밀한 분할 프롬프트로 활용하고, 마스크 디코더만 선택적으로 미세조정함으로써 학습 효율성과 성능을 동시에 확보하였다.  
-해당 방식은 향후 다양한 임상 영상에서 분할 기반 보조진단 시스템으로 확장될 가능성을 제시한다.
+본 연구는 뇌종양 MRI 영상 분할을 위해 YOLOv5를 활용한 객체 탐지 결과를 프롬프트로 사용하여 MedSAM 모델의 분할 기능을 사용해 보다 정밀한 뇌종양 분할을 할 수 있었다.  
+
+실험 결과, 제안한 방식은 기존 SAM 및 미조정 MedSAM보다 높은 Dice 점수를 기록하였으며 제안된 fine-tuning 전략이 뇌종양 분할 정확도 향상에 효과적임을 입증하였다.  
+또한 일반 비전 모델인 SAM의 구조를 의료 영상에 특화하여 활용 가능함을 보여주었으며, 다양한 임상 영상 데이터에의 확장 가능성 또한 제시하였다.
+
+그러나 본 연구는 BraTS 2023 데이터셋 기반으로 진행되었으며 모델의 범용성과 타 의료 영상에 대한 일반화 성능은 향후 검증이 필요하다.
+
 
 
