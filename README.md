@@ -12,7 +12,8 @@ DOI: https://doi.org/10.1109/AINIT61980.2024.10581523
 
 ### 2. Methodology
 
-<img width="600" alt="image" src="https://github.com/user-attachments/assets/599131d6-52f9-4a93-b253-7dbbc69897fc" />
+<img width="500" alt="image" src="https://github.com/user-attachments/assets/93ca01ca-1751-4cbe-b0cd-eb25176f713d" />
+
 
 - **Dataset**  
   BraTS 2023의 모달리티 MRI 데이터 사용함.
