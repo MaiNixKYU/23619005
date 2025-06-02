@@ -5,44 +5,62 @@ DOI: https://doi.org/10.1109/AINIT61980.2024.10581523
 ---
 
 ### 1. Research Purpose
-YOLOv5로부터 생성된 바운딩 박스를 프롬프트로 활용하여 MedSAM의 성능을 향상시키는 것을 목표로 함. 이를 통해 뇌종양 MRI 이미지 분할의 정밀도를 높이고자 하였다.
+
+본 연구는 다중 모달 뇌종양 MRI 영상을 보다 정밀하게 분할하기 위해, 객체 탐지 모델인 YOLOv5로부터 얻은 종양 위치 정보를 프롬프트로 활용하여 MedSAM(Segment Anything in Medical Images)을 미세조정(fine-tuning)하고자 한다. 기존의 SAM 및 미세조정 전 MedSAM과 비교하여 향상된 정확도(Dice Score)를 목표로 하며, 의료영상 특화 모델 개발의 가능성을 검토한다.
 
 ---
 
 ### 2. Methodology
 
 - **Dataset**  
-  BraTS 2023의 다중 모달 MRI 데이터 802 케이스 사용 (T1c, T2w, T2f)
+  BraTS 2023의 다중 모달 MRI 데이터 802건을 사용 (T1c, T2w, T2f). T1n은 정보가 제한적이므로 제외.  
+  종양이 강조되는 모달리티 중심으로 분석을 수행함.
 
 - **Preprocessing**  
-  - NIfTI → PNG 변환 (정규화 및 3채널 구성)
-  - 바운딩 박스 라벨을 YOLO 포맷으로 저장
+  - NIfTI 파일을 3채널 24bit PNG 이미지로 변환 (0~255 정규화)
+  - YOLO 학습을 위한 바운딩 박스 라벨은 YOLO 포맷(.txt)으로 저장
+  - Unlabeled slice는 배경 데이터로 저장
 
-- **Object Detection (YOLOv5)**  
+- **Object Detection with YOLOv5**  
   - 모델: YOLOv5s, YOLOv5l  
-  - 학습 설정: 100 epochs, learning rate=0.01, optimizer=SGD  
-  - 성능: YOLOv5l이 더 높은 mAP과 precision 기록
+  - 학습 조건: 100 epochs, learning rate = 0.01, optimizer = SGD  
+  - 성능 결과: YOLOv5l이 precision, mAP 측면에서 더 우수함  
+  - YOLOv5l의 예측 결과를 기반으로 bounding box 중심 좌표를 MedSAM의 프롬프트로 활용
 
-- **Segmentation (MedSAM Fine-Tuning)**  
-  - Image Encoder, Prompt Encoder는 freeze  
-  - Mask Decoder만 미세조정  
-  - Optimizer: AdamW  
-  - Loss Function: Dice Loss (MONAI) + BCEWithLogitsLoss 사용
+- **Segmentation with MedSAM**
+  - 구조: SAM 기반 모델의 Image Encoder, Prompt Encoder는 freeze  
+  - 마스크 디코더만 fine-tuning (100 epochs, lr=0.0001)
+  - Optimizer: AdamW (가중치 감소 + 모멘텀 기반)
+  - Loss Function:
+    - Dice Loss (MONAI 기반, Sigmoid 포함)
+    - BCEWithLogitsLoss (Binary segmentation 특화)
 
 ### 3. Experimental Results
+
 | Model               | Dice Score |
-| ------------------- | ---------- |
+|---------------------|------------|
 | SAM                 | 0.692      |
 | MedSAM (Base)       | 0.723      |
 | MedSAM (Fine-tuned) | **0.889**  |
 
-- YOLOv5l을 활용한 위치 기반 프롬프트로 세부 마스크 생성 능력 향상
+- YOLOv5l 기반 프롬프트를 활용해 MedSAM의 세분화된 마스크 생성 능력을 크게 향상시킴
+- Fine-tuned MedSAM은 기존 SAM 및 미조정 MedSAM보다 유의미하게 높은 정확도를 기록
+- MedSAM은 종양의 형태적 특성을 보다 정밀하게 반영할 수 있었음
 
-- Fine-tuned MedSAM이 가장 높은 정확도로 뇌종양 분할 수행
+---
 
 ### 4. Limitations
-- BraTS 2023 기준으로 성능은 우수하지만, 기타 의료 영상 모달리티에 대한 일반화는 검증되지 않음
-- 타 데이터셋 및 질병 유형에 대한 평가 필요
+
+- 실험은 BraTS 2023에 국한되었으며, 타 의료 영상 데이터셋에서의 일반화 성능은 미검증 상태
+- 다양한 병변 유형 및 영상 모달리티에 대한 테스트가 추가적으로 필요
+- 전이성 종양, 비정형 구조, 저명도 병변 등 복잡한 패턴에 대한 대응 능력은 후속 연구에서 확인해야 함
+
+---
 
 ### 5. Summary
-본 논문은 객체 탐지 기반 프롬프트와 SAM 계열 분할 모델을 결합하여 뇌종양 MRI 이미지 분할 정확도를 크게 향상시킨 사례임. 범용 모델(SAM)의 의료 영상 특화 활용 가능성을 보여주며, fine-tuning 전략의 효과성과 실용성을 입증하였다.
+
+본 논문은 일반 비전 모델(SAM)을 의료 영상에 맞게 변형한 MedSAM을 객체 탐지 기반 프롬프트와 결합하여 뇌종양 MRI 영상 분할 성능을 향상시킨 사례이다.  
+YOLOv5의 탐지 결과를 정밀한 분할 프롬프트로 활용하고, 마스크 디코더만 선택적으로 미세조정함으로써 학습 효율성과 성능을 동시에 확보하였다.  
+해당 방식은 향후 다양한 임상 영상에서 분할 기반 보조진단 시스템으로 확장될 가능성을 제시한다.
+
+
